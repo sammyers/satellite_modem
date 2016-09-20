@@ -2,9 +2,10 @@ import numpy as np
 import sounddevice as sd
 
 class Receiver(object):
-	def __init__(self, sample_rate, carrier_freq):
+	def __init__(self, sample_rate, carrier_freq, samples_per_bit):
 		self.sample_rate = sample_rate
 		self.carrier_freq = carrier_freq
+		self.samples_per_bit = samples_per_bit
 	
 	def record(self, duration) -> np.array:
 		recording = sd.rec(duration * self.sample_rate, samplerate=self.sample_rate, channels=1)
@@ -22,11 +23,11 @@ class Receiver(object):
 	def wave_to_bits(self, wave) -> np.array:
 		pass
 
-	def bits_to_char(self, bits) -> str:
-		pass
-
-	def bits_to_string(self, bits) -> str:
-		pass
+	def bits_to_string(self, bits: np.array) -> str:
+		bit_string = ''.join([str(x) for x in bits.tolist()])
+		n = int('0b{}'.format(bit_string[1:]), 2)
+		string = n.to_bytes((n.bit_length() + 7) // 8, 'big').decode()
+		return string
 
 	def receive_audio(self, duration) -> np.array:
 		recording = self.record(duration)
@@ -39,6 +40,11 @@ class Receiver(object):
 
 
 if __name__ == '__main__':
-	receiver = Receiver()
-	duration = 10
-	string = receiver.recieve_audio(duration)
+	sample_rate = 44000
+	carrier_freq = 2000 * np.pi / sample_rate
+	samples_per_bit = 1000
+	receiver = Receiver(sample_rate, carrier_freq, samples_per_bit)
+	# duration = 10
+	# string = receiver.recieve_audio(duration)
+	bits = np.tile(np.array([0, 1, 1, 0, 0, 0, 0, 1]), 2)
+	print(receiver.bits_to_string(bits))
