@@ -14,8 +14,9 @@ class Transmitter(object):
         return np.array([int(x) for x in actual_bits])
 
     def bits_to_wave(self, bits) -> np.array:
-        bits[bits==0] = -1
-        return np.repeat(bits, self.samples_per_bit)
+        padded_bits = np.concatenate([np.ones(8), bits, np.ones(8)])
+        padded_bits[padded_bits==0] = -1
+        return np.repeat(padded_bits, self.samples_per_bit)
 
     def modulate(self, wave) -> np.array:
         carrier_wave = np.cos(self.carrier_freq * np.arange(len(wave)))
@@ -35,9 +36,21 @@ class Transmitter(object):
         plt.plot(wave)
         plt.show()
 
+    def plot_fft(self, wave):
+        n = len(wave)
+        freq_range = np.linspace(-np.pi, np.pi * (n - 1) / n, n)
+        fft = np.fft.fft(wave)
+        plt.plot(freq_range, np.fft.fftshift(np.abs(fft)))
+        plt.show()
+
 if __name__ == '__main__':
     sample_rate = 44000
     carrier_freq = 2000 * np.pi / sample_rate
     samples_per_bit = 1000
     transmitter = Transmitter(sample_rate, carrier_freq, samples_per_bit)
-    transmitter.transmit_audio('asdfaeirauwenfajsdijr')
+    signal = transmitter.bits_to_wave(transmitter.string_to_bits('asdfaeirauwenfajsdijr'))
+    string = 'this is a test'
+    print(string)
+    # print(transmitter.string_to_bits(string))
+    transmitter.transmit_audio(string)
+
